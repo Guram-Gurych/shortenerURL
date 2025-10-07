@@ -9,11 +9,11 @@ import (
 )
 
 type Handler struct {
-	service *service.ShortenerService
+	service service.URLShortener
 	baseURL string
 }
 
-func NewHandler(s *service.ShortenerService, baseURL string) *Handler {
+func NewHandler(s service.URLShortener, baseURL string) *Handler {
 	return &Handler{
 		service: s,
 		baseURL: baseURL,
@@ -22,7 +22,7 @@ func NewHandler(s *service.ShortenerService, baseURL string) *Handler {
 
 func (h *Handler) PostHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		http.Error(w, "Разрешен только Post запросы", http.StatusMethodNotAllowed)
+		http.Error(w, "Разрешены только Post запросы", http.StatusMethodNotAllowed)
 		return
 	}
 
@@ -54,7 +54,7 @@ func (h *Handler) PostHandler(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) GetHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		http.Error(w, "Разрешен только Get запрос", http.StatusMethodNotAllowed)
+		http.Error(w, "Разрешены только Get запросы", http.StatusMethodNotAllowed)
 		return
 	}
 

@@ -6,11 +6,16 @@ import (
 	"github.com/google/uuid"
 )
 
+type URLShortener interface {
+	CreateShortURL(originalURL string) (string, error)
+	GetOriginalURL(id string) (string, error)
+}
+
 type ShortenerService struct {
 	repo repository.URLRepository
 }
 
-func NewShortenerService(repo repository.URLRepository) *ShortenerService {
+func NewShortenerService(repo *repository.MemoryRepository) *ShortenerService {
 	return &ShortenerService{
 		repo: repo,
 	}
