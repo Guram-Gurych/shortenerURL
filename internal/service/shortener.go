@@ -16,12 +16,12 @@ func NewShortenerService(repo repository.URLRepository) *ShortenerService {
 	}
 }
 
-func generateId() string {
+func generateID() string {
 	return uuid.New().String()[:8]
 }
 
 func (ss *ShortenerService) CreateShortURL(originalURL string) (string, error) {
-	id := generateId()
+	id := generateID()
 
 	if err := ss.repo.Save(id, originalURL); err != nil {
 		return "", fmt.Errorf("не удалось сохранить URL в сервисе: %w", err)
