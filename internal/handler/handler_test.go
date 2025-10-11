@@ -89,15 +89,18 @@ func TestGetHandler(t *testing.T) {
 	type testCase struct {
 		name             string
 		requestURL       string
+		method           string
 		mockOriginalURL  string
 		mockError        error
 		expectedStatus   int
 		expectedLocation string
 	}
+
 	tests := []testCase{
 		{
 			name:             "Успешный редирект",
 			requestURL:       "/shortID123",
+			method:           http.MethodGet,
 			mockOriginalURL:  "https://practicum.yandex.ru/",
 			mockError:        nil,
 			expectedStatus:   http.StatusTemporaryRedirect,
@@ -106,6 +109,7 @@ func TestGetHandler(t *testing.T) {
 		{
 			name:             "URL не найден",
 			requestURL:       "/notFoundID",
+			method:           http.MethodGet,
 			mockOriginalURL:  "",
 			mockError:        errors.New("URL not found"),
 			expectedStatus:   http.StatusBadRequest,
@@ -114,12 +118,14 @@ func TestGetHandler(t *testing.T) {
 		{
 			name:             "ID не указан в пути",
 			requestURL:       "/",
-			expectedStatus:   http.StatusBadRequest,
+			method:           http.MethodGet,
+			expectedStatus:   http.StatusNotFound,
 			expectedLocation: "",
 		},
 		{
 			name:             "Неверный HTTP-метод",
-			requestURL:       "/ID",
+			requestURL:       "/someID",
+			method:           http.MethodPost,
 			expectedStatus:   http.StatusMethodNotAllowed,
 			expectedLocation: "",
 		},
@@ -127,7 +133,7 @@ func TestGetHandler(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			req := httptest.NewRequest(http.MethodGet, test.requestURL, nil)
+			req := httptest.NewRequest(test.method, test.requestURL, nil)
 			recorder := httptest.NewRecorder()
 
 			mockService := &MockService{
@@ -140,9 +146,9 @@ func TestGetHandler(t *testing.T) {
 			}
 
 			handler := NewHandler(mockService, "http://localhost:8080")
-
 			router := chi.NewRouter()
 			router.Get("/{id}", handler.Get)
+
 			router.ServeHTTP(recorder, req)
 
 			res := recorder.Result()
