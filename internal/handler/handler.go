@@ -3,9 +3,9 @@ package handler
 import (
 	"fmt"
 	"github.com/Guram-Gurych/shortenerURL.git/internal/service"
+	"github.com/go-chi/chi/v5"
 	"io"
 	"net/http"
-	"strings"
 )
 
 type Handler struct {
@@ -20,12 +20,7 @@ func NewHandler(s service.URLShortener, baseURL string) *Handler {
 	}
 }
 
-func (h *Handler) PostHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "Разрешены только Post запросы", http.StatusMethodNotAllowed)
-		return
-	}
-
+func (h *Handler) Post(w http.ResponseWriter, r *http.Request) {
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, "Не удалось прочитать тело запроса", http.StatusBadRequest)
@@ -52,13 +47,8 @@ func (h *Handler) PostHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(shortURL))
 }
 
-func (h *Handler) GetHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		http.Error(w, "Разрешены только Get запросы", http.StatusMethodNotAllowed)
-		return
-	}
-
-	id := strings.TrimPrefix(r.URL.Path, "/")
+func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
 	if id == "" {
 		http.Error(w, "ID не может быть пустым", http.StatusBadRequest)
 		return

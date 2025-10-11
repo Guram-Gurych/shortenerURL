@@ -2,6 +2,7 @@ package handler
 
 import (
 	"errors"
+	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"io"
@@ -69,7 +70,7 @@ func TestPostHandler(t *testing.T) {
 		baseURL := "http://localhost:8080"
 		handler := NewHandler(mockService, baseURL)
 
-		handler.PostHandler(recorder, req)
+		handler.Post(recorder, req)
 
 		res := recorder.Result()
 		defer res.Body.Close()
@@ -88,15 +89,18 @@ func TestGetHandler(t *testing.T) {
 	type testCase struct {
 		name             string
 		requestURL       string
+		method           string
 		mockOriginalURL  string
 		mockError        error
 		expectedStatus   int
 		expectedLocation string
 	}
+
 	tests := []testCase{
 		{
 			name:             "Успешный редирект",
 			requestURL:       "/shortID123",
+			method:           http.MethodGet,
 			mockOriginalURL:  "https://practicum.yandex.ru/",
 			mockError:        nil,
 			expectedStatus:   http.StatusTemporaryRedirect,
@@ -105,6 +109,7 @@ func TestGetHandler(t *testing.T) {
 		{
 			name:             "URL не найден",
 			requestURL:       "/notFoundID",
+			method:           http.MethodGet,
 			mockOriginalURL:  "",
 			mockError:        errors.New("URL not found"),
 			expectedStatus:   http.StatusBadRequest,
@@ -113,12 +118,14 @@ func TestGetHandler(t *testing.T) {
 		{
 			name:             "ID не указан в пути",
 			requestURL:       "/",
-			expectedStatus:   http.StatusBadRequest,
+			method:           http.MethodGet,
+			expectedStatus:   http.StatusNotFound,
 			expectedLocation: "",
 		},
 		{
 			name:             "Неверный HTTP-метод",
-			requestURL:       "/ID",
+			requestURL:       "/someID",
+			method:           http.MethodPost,
 			expectedStatus:   http.StatusMethodNotAllowed,
 			expectedLocation: "",
 		},
@@ -126,23 +133,23 @@ func TestGetHandler(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			requestMethod := http.MethodGet
-			if test.name == "Неверный HTTP-метод" {
-				requestMethod = http.MethodPost
-			}
-
-			req := httptest.NewRequest(requestMethod, test.requestURL, nil)
+			req := httptest.NewRequest(test.method, test.requestURL, nil)
 			recorder := httptest.NewRecorder()
 
 			mockService := &MockService{
 				GetOriginalURLFunc: func(id string) (string, error) {
-					return test.mockOriginalURL, test.mockError
+					if id == "shortID123" {
+						return test.mockOriginalURL, test.mockError
+					}
+					return "", errors.New("URL not found")
 				},
 			}
 
 			handler := NewHandler(mockService, "http://localhost:8080")
+			router := chi.NewRouter()
+			router.Get("/{id}", handler.Get)
 
-			handler.GetHandler(recorder, req)
+			router.ServeHTTP(recorder, req)
 
 			res := recorder.Result()
 			defer res.Body.Close()
