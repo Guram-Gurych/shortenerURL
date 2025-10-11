@@ -2,6 +2,7 @@ package handler
 
 import (
 	"errors"
+	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"io"
@@ -69,7 +70,7 @@ func TestPostHandler(t *testing.T) {
 		baseURL := "http://localhost:8080"
 		handler := NewHandler(mockService, baseURL)
 
-		handler.PostHandler(recorder, req)
+		handler.Post(recorder, req)
 
 		res := recorder.Result()
 		defer res.Body.Close()
@@ -126,23 +127,23 @@ func TestGetHandler(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			requestMethod := http.MethodGet
-			if test.name == "Неверный HTTP-метод" {
-				requestMethod = http.MethodPost
-			}
-
-			req := httptest.NewRequest(requestMethod, test.requestURL, nil)
+			req := httptest.NewRequest(http.MethodGet, test.requestURL, nil)
 			recorder := httptest.NewRecorder()
 
 			mockService := &MockService{
 				GetOriginalURLFunc: func(id string) (string, error) {
-					return test.mockOriginalURL, test.mockError
+					if id == "shortID123" {
+						return test.mockOriginalURL, test.mockError
+					}
+					return "", errors.New("URL not found")
 				},
 			}
 
 			handler := NewHandler(mockService, "http://localhost:8080")
 
-			handler.GetHandler(recorder, req)
+			router := chi.NewRouter()
+			router.Get("/{id}", handler.Get)
+			router.ServeHTTP(recorder, req)
 
 			res := recorder.Result()
 			defer res.Body.Close()
