@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/Guram-Gurych/shortenerURL.git/internal/config"
 	"github.com/Guram-Gurych/shortenerURL.git/internal/handler"
 	"github.com/Guram-Gurych/shortenerURL.git/internal/repository"
 	"github.com/Guram-Gurych/shortenerURL.git/internal/service"
@@ -10,18 +11,16 @@ import (
 )
 
 func main() {
-	var baseURL = "http://localhost:8080"
-	var serverAddr = ":8080"
-
-	repository := repository.NewMemoryRepository()
-	server := service.NewShortenerService(repository)
-	handle := handler.NewHandler(server, baseURL)
+	cfg := config.InitConfig()
+	rep := repository.NewMemoryRepository()
+	serv := service.NewShortenerService(rep)
+	hndl := handler.NewHandler(serv, cfg.BaseURL)
 
 	mux := chi.NewRouter()
-	mux.Post("/", handle.Post)
-	mux.Get("/{id}", handle.Get)
+	mux.Post("/", hndl.Post)
+	mux.Get("/{id}", hndl.Get)
 
-	err := http.ListenAndServe(serverAddr, mux)
+	err := http.ListenAndServe(cfg.ServerAddress, mux)
 	if err != nil {
 		log.Fatalf("Сервер упал: %v", err)
 	}
