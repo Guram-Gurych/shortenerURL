@@ -33,18 +33,18 @@ type responseData struct {
 
 type loggingResponseWriter struct {
 	http.ResponseWriter
-	responseData *responseData
+	data *responseData
 }
 
 func (r *loggingResponseWriter) Write(b []byte) (int, error) {
 	size, err := r.ResponseWriter.Write(b)
-	r.responseData.size += size
+	r.data.size += size
 	return size, err
 }
 
 func (r *loggingResponseWriter) WriteHeader(statusCode int) {
 	r.ResponseWriter.WriteHeader(statusCode)
-	r.responseData.status = statusCode
+	r.data.status = statusCode
 }
 
 func RequestLogger(next http.Handler) http.Handler {
@@ -56,17 +56,15 @@ func RequestLogger(next http.Handler) http.Handler {
 		}
 		lw := loggingResponseWriter{
 			ResponseWriter: w,
-			responseData:   rd,
+			data:           rd,
 		}
 
 		next.ServeHTTP(&lw, r)
 
-		duration := time.Since(start)
-
 		Log.Info("Request processed",
 			zap.String("uri", r.RequestURI),
 			zap.String("method", r.Method),
-			zap.Duration("duration", duration),
+			zap.Duration("duration", time.Since(start)),
 			zap.Int("status_code", rd.status),
 			zap.Int("response_size", rd.size),
 		)
