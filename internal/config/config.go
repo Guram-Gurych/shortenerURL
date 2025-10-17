@@ -24,5 +24,6 @@ func InitConfig() *Config {
 	if envBaseURL := os.Getenv("BASE_URL"); envBaseURL != "" {
 		config.BaseURL = envBaseURL
 	}
+
 	return &config
 }
