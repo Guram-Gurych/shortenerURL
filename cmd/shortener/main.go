@@ -26,7 +26,8 @@ func main() {
 	mux.Use(logger.RequestLogger)
 	mux.Post("/", hndl.Post)
 	mux.Get("/{id}", hndl.Get)
-
+	mux.Post("/api/shorten", hndl.PostShorten)
+	
 	logger.Log.Info("Starting server", zap.String("address", cfg.ServerAddress))
 
 	err := http.ListenAndServe(cfg.ServerAddress, mux)

@@ -162,3 +162,90 @@ func TestGetHandler(t *testing.T) {
 		})
 	}
 }
+
+func TestPostShortenHandler(t *testing.T) {
+	type testCase struct {
+		name           string
+		requestBody    string
+		contentType    string
+		mockID         string
+		mockError      error
+		expectedStatus int
+		expectedBody   string
+	}
+	tests := []testCase{
+		{
+			name:           "Успешное создание JSON",
+			requestBody:    `{"url": "https://practicum.yandex.ru"}`,
+			contentType:    "application/json",
+			mockID:         "E9wVbL1G",
+			mockError:      nil,
+			expectedStatus: http.StatusCreated,
+			expectedBody:   `{"result": "http://localhost:8080/E9wVbL1G"}`,
+		},
+		{
+			name:           "Ошибка: Неверный Content-Type",
+			requestBody:    `{"url": "https://google.com"}`,
+			contentType:    "text/plain",
+			mockError:      nil,
+			expectedStatus: http.StatusUnsupportedMediaType,
+			expectedBody:   "",
+		},
+		{
+			name:           "Ошибка: Невалидный JSON",
+			requestBody:    `{"url": "https://malformed.com"`,
+			contentType:    "application/json",
+			mockError:      nil,
+			expectedStatus: http.StatusBadRequest,
+			expectedBody:   "",
+		},
+		{
+			name:           "Ошибка: Пустое поле URL",
+			requestBody:    `{"url": ""}`,
+			contentType:    "application/json",
+			mockError:      nil,
+			expectedStatus: http.StatusBadRequest,
+			expectedBody:   "",
+		},
+		{
+			name:           "Ошибка: Ошибка от сервиса",
+			requestBody:    `{"url": "https://yandex.ru"}`,
+			contentType:    "application/json",
+			mockError:      errors.New("не удалось сохранить"),
+			expectedStatus: http.StatusInternalServerError,
+			expectedBody:   "",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			reqBody := strings.NewReader(test.requestBody)
+			req := httptest.NewRequest(http.MethodPost, "/api/shorten", reqBody)
+			req.Header.Set("Content-Type", test.contentType)
+
+			recorder := httptest.NewRecorder()
+
+			mockService := &MockService{
+				CreateShortURLFunc: func(originalURL string) (string, error) {
+					return test.mockID, test.mockError
+				},
+			}
+
+			baseURL := "http://localhost:8080"
+			handler := NewHandler(mockService, baseURL)
+
+			handler.PostShorten(recorder, req)
+
+			res := recorder.Result()
+			defer res.Body.Close()
+
+			assert.Equal(t, test.expectedStatus, res.StatusCode, "Код ответа не совпадает")
+
+			if test.expectedBody != "" {
+				body, err := io.ReadAll(res.Body)
+				require.NoError(t, err)
+				assert.JSONEq(t, test.expectedBody, string(body), "Тело ответа не совпадает")
+			}
+		})
+	}
+}
