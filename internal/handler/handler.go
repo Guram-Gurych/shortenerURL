@@ -76,7 +76,7 @@ func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) PostShorten(w http.ResponseWriter, r *http.Request) {
 	if !strings.Contains(r.Header.Get("Content-Type"), "application/json") {
-		http.Error(w, "invalid content type", http.StatusNotFound)
+		http.Error(w, "invalid content type", http.StatusUnsupportedMediaType)
 		return
 	}
 
