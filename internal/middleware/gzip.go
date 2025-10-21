@@ -94,6 +94,6 @@ func GzipMiddleware(next http.Handler) http.Handler {
 			defer cr.Close()
 		}
 
-		next.SeчrveHTTP(ow, r)
+		next.ServeHTTP(ow, r)
 	})
 }
