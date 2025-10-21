@@ -4,6 +4,7 @@ import (
 	"github.com/Guram-Gurych/shortenerURL.git/internal/config"
 	"github.com/Guram-Gurych/shortenerURL.git/internal/handler"
 	"github.com/Guram-Gurych/shortenerURL.git/internal/logger"
+	"github.com/Guram-Gurych/shortenerURL.git/internal/middleware"
 	"github.com/Guram-Gurych/shortenerURL.git/internal/repository"
 	"github.com/Guram-Gurych/shortenerURL.git/internal/service"
 	"github.com/go-chi/chi/v5"
@@ -23,11 +24,12 @@ func main() {
 	hndl := handler.NewHandler(serv, cfg.BaseURL)
 
 	mux := chi.NewRouter()
-	mux.Use(logger.RequestLogger)
+	mux.Use(middleware.RequestLogger)
+	mux.Use(middleware.GzipMiddleware)
 	mux.Post("/", hndl.Post)
 	mux.Get("/{id}", hndl.Get)
 	mux.Post("/api/shorten", hndl.PostShorten)
-	
+
 	logger.Log.Info("Starting server", zap.String("address", cfg.ServerAddress))
 
 	err := http.ListenAndServe(cfg.ServerAddress, mux)
