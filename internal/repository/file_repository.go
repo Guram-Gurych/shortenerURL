@@ -50,11 +50,11 @@ func NewFileRepository(filePath string) (*FileRepository, error) {
 
 func (rep *FileRepository) loadFromFile() error {
 	file, err := os.OpenFile(rep.filePath, os.O_RDONLY|os.O_CREATE, 0644)
-	defer file.Close()
 	if err != nil {
 		logger.Log.Error("Не удалось открыть файл для чтения", zap.String("path", rep.filePath), zap.Error(err))
 		return err
 	}
+	defer file.Close()
 
 	decoder := json.NewDecoder(file)
 
@@ -70,7 +70,7 @@ func (rep *FileRepository) loadFromFile() error {
 			return err
 		}
 
-		rep.urls[record.ShortUrl] = record.OriginalUrl
+		rep.urls[record.ShortURL] = record.OriginalURL
 		if uuid, err := strconv.Atoi(record.UUID); err == nil {
 			if uuid > rep.uuidCount {
 				rep.uuidCount = uuid
@@ -98,8 +98,8 @@ func (rep *FileRepository) Save(id, url string) error {
 	rep.uuidCount++
 	record := model.URLModel{
 		UUID:        strconv.Itoa(rep.uuidCount),
-		ShortUrl:    id,
-		OriginalUrl: url,
+		ShortURL:    id,
+		OriginalURL: url,
 	}
 
 	if err := rep.encoder.Encode(&record); err != nil {
