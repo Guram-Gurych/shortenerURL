@@ -1,7 +1,6 @@
 package repository
 
 import (
-	"fmt"
 	"sync"
 )
 
@@ -19,16 +18,22 @@ func NewMemoryRepository() *MemoryRepository {
 func (rep *MemoryRepository) Save(id, url string) error {
 	rep.mu.Lock()
 	defer rep.mu.Unlock()
+
+	_, ok := rep.urls[id]
+	if ok {
+		return ErrorAlreadyExists
+	}
+
 	rep.urls[id] = url
 	return nil
 }
 
 func (rep *MemoryRepository) Get(id string) (string, error) {
-	rep.mu.Lock()
-	defer rep.mu.Unlock()
+	rep.mu.RLock()
+	defer rep.mu.RUnlock()
 	value, ok := rep.urls[id]
 	if !ok {
-		return "", fmt.Errorf("URL с таким id не найден")
+		return "", ErrorNotFound
 	}
 
 	return value, nil

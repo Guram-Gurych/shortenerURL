@@ -13,13 +13,18 @@ import (
 )
 
 func main() {
-	if err := logger.Initalize("info"); err != nil {
+	if err := logger.Initialize("info"); err != nil {
 		panic(err)
 	}
 	defer logger.Log.Sync()
 
 	cfg := config.InitConfig()
-	rep := repository.NewMemoryRepository()
+	rep, err := repository.NewFileRepository(cfg.FileStoragePath)
+	if err != nil {
+		logger.Log.Fatal("Ошибка репозитория", zap.Error(err))
+	}
+	defer rep.Close()
+
 	serv := service.NewShortenerService(rep)
 	hndl := handler.NewHandler(serv, cfg.BaseURL)
 
@@ -32,7 +37,7 @@ func main() {
 
 	logger.Log.Info("Starting server", zap.String("address", cfg.ServerAddress))
 
-	err := http.ListenAndServe(cfg.ServerAddress, mux)
+	err = http.ListenAndServe(cfg.ServerAddress, mux)
 	if err != nil {
 		logger.Log.Fatal("Сервер упал", zap.Error(err))
 	}

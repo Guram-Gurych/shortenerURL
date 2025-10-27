@@ -81,11 +81,12 @@ func (h *Handler) PostShorten(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req RequestJSON
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	decoder := json.NewDecoder(r.Body)
+	defer r.Body.Close()
+	if err := decoder.Decode(&req); err != nil {
 		http.Error(w, "Failed to decode request body", http.StatusBadRequest)
 		return
 	}
-	defer r.Body.Close()
 
 	if req.URL == "" {
 		http.Error(w, "URL field is missing", http.StatusBadRequest)
