@@ -1,14 +1,15 @@
 package service
 
 import (
+	"context"
 	"fmt"
 	"github.com/Guram-Gurych/shortenerURL.git/internal/repository"
 	"github.com/google/uuid"
 )
 
 type URLShortener interface {
-	CreateShortURL(originalURL string) (string, error)
-	GetOriginalURL(id string) (string, error)
+	CreateShortURL(ctx context.Context, originalURL string) (string, error)
+	GetOriginalURL(ctx context.Context, id string) (string, error)
 }
 
 type ShortenerService struct {
@@ -25,18 +26,18 @@ func generateID() string {
 	return uuid.New().String()[:8]
 }
 
-func (ss *ShortenerService) CreateShortURL(originalURL string) (string, error) {
+func (ss *ShortenerService) CreateShortURL(ctx context.Context, originalURL string) (string, error) {
 	id := generateID()
 
-	if err := ss.repo.Save(id, originalURL); err != nil {
+	if err := ss.repo.Save(ctx, id, originalURL); err != nil {
 		return "", fmt.Errorf("не удалось сохранить URL в сервисе: %w", err)
 	}
 
 	return id, nil
 }
 
-func (ss *ShortenerService) GetOriginalURL(id string) (string, error) {
-	value, err := ss.repo.Get(id)
+func (ss *ShortenerService) GetOriginalURL(ctx context.Context, id string) (string, error) {
+	value, err := ss.repo.Get(ctx, id)
 
 	if err != nil {
 		return "", err

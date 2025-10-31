@@ -2,10 +2,12 @@ package main
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"github.com/go-resty/resty/v2"
 	"os"
 	"strings"
+	"time"
 )
 
 func main() {
@@ -21,7 +23,9 @@ func main() {
 
 	client := resty.New()
 
-	resp, err := client.R().SetHeader("Content-Type", "text/plain").SetBody(long).Post(endpoint)
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	resp, err := client.R().SetContext(ctx).SetHeader("Content-Type", "text/plain").SetBody(long).Post(endpoint)
 
 	if err != nil {
 		panic(err)

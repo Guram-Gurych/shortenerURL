@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"errors"
 	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
@@ -13,16 +14,16 @@ import (
 )
 
 type MockService struct {
-	CreateShortURLFunc func(originalURL string) (string, error)
-	GetOriginalURLFunc func(id string) (string, error)
+	CreateShortURLFunc func(ctx context.Context, originalURL string) (string, error)
+	GetOriginalURLFunc func(ctx context.Context, id string) (string, error)
 }
 
-func (m *MockService) CreateShortURL(originalURL string) (string, error) {
-	return m.CreateShortURLFunc(originalURL)
+func (m *MockService) CreateShortURL(ctx context.Context, originalURL string) (string, error) {
+	return m.CreateShortURLFunc(ctx, originalURL)
 }
 
-func (m *MockService) GetOriginalURL(id string) (string, error) {
-	return m.GetOriginalURLFunc(id)
+func (m *MockService) GetOriginalURL(ctx context.Context, id string) (string, error) {
+	return m.GetOriginalURLFunc(ctx, id)
 }
 
 func TestPostHandler(t *testing.T) {
@@ -62,7 +63,7 @@ func TestPostHandler(t *testing.T) {
 		recorder := httptest.NewRecorder()
 
 		mockService := &MockService{
-			CreateShortURLFunc: func(originalURL string) (string, error) {
+			CreateShortURLFunc: func(ctx context.Context, originalURL string) (string, error) {
 				return test.mockID, test.mockError
 			},
 		}
@@ -137,7 +138,7 @@ func TestGetHandler(t *testing.T) {
 			recorder := httptest.NewRecorder()
 
 			mockService := &MockService{
-				GetOriginalURLFunc: func(id string) (string, error) {
+				GetOriginalURLFunc: func(ctx context.Context, id string) (string, error) {
 					if id == "shortID123" {
 						return test.mockOriginalURL, test.mockError
 					}
@@ -226,7 +227,7 @@ func TestPostShortenHandler(t *testing.T) {
 			recorder := httptest.NewRecorder()
 
 			mockService := &MockService{
-				CreateShortURLFunc: func(originalURL string) (string, error) {
+				CreateShortURLFunc: func(ctx context.Context, originalURL string) (string, error) {
 					return test.mockID, test.mockError
 				},
 			}

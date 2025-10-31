@@ -44,7 +44,8 @@ func (h *Handler) Post(w http.ResponseWriter, r *http.Request) {
 
 	originalURL := string(body)
 
-	id, err := h.service.CreateShortURL(originalURL)
+	ctx := r.Context()
+	id, err := h.service.CreateShortURL(ctx, originalURL)
 	if err != nil {
 		http.Error(w, "Server error", http.StatusInternalServerError)
 		return
@@ -64,7 +65,8 @@ func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	originalURL, err := h.service.GetOriginalURL(id)
+	ctx := r.Context()
+	originalURL, err := h.service.GetOriginalURL(ctx, id)
 	if err != nil {
 		http.Error(w, "URL not found", http.StatusBadRequest)
 		return
@@ -93,7 +95,8 @@ func (h *Handler) PostShorten(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := h.service.CreateShortURL(req.URL)
+	ctx := r.Context()
+	id, err := h.service.CreateShortURL(ctx, req.URL)
 	if err != nil {
 		http.Error(w, "Server error", http.StatusInternalServerError)
 		return
