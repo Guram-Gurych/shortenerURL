@@ -13,7 +13,7 @@ func Initialize(DatabaseDSN string) (*sql.DB, error) {
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
-	defer cancel
+	defer cancel()
 	if err = db.PingContext(ctx); err != nil {
 		return nil, err
 	}
