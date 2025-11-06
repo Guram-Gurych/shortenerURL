@@ -121,7 +121,7 @@ func (h *Handler) PostShorten(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) GetPing(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 1*time.Second)
-	defer cancel
+	defer cancel()
 
 	err := h.db.PingContext(ctx)
 	if err != nil {
