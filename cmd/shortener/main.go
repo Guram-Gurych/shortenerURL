@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"github.com/Guram-Gurych/shortenerURL.git/internal/config"
 	"github.com/Guram-Gurych/shortenerURL.git/internal/config/db"
 	"github.com/Guram-Gurych/shortenerURL.git/internal/handler"
@@ -20,12 +21,16 @@ func main() {
 	defer logger.Log.Sync()
 
 	cfg := config.InitConfig()
+
+	var dbConn *sql.DB
+	var err error
 	if cfg.DatabaseDSN != "" {
-		db, err := db.Initialize(cfg.DatabaseDSN)
+		dbConn, err = db.Initialize(cfg.DatabaseDSN)
 		if err != nil {
 			logger.Log.Fatal("Ошибка инициализации DB", zap.Error(err))
 		}
-		defer db.Close()
+		defer dbConn.Close()
+		logger.Log.Info("DB connection established")
 	}
 
 	rep, err := repository.NewFileRepository(cfg.FileStoragePath)
@@ -35,7 +40,7 @@ func main() {
 	defer rep.Close()
 
 	serv := service.NewShortenerService(rep)
-	hndl := handler.NewHandler(serv, cfg.BaseURL, db)
+	hndl := handler.NewHandler(serv, cfg.BaseURL, dbConn)
 
 	mux := chi.NewRouter()
 	mux.Use(middleware.RequestLogger)
