@@ -1,6 +1,8 @@
 package handler
 
 import (
+	"context"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"github.com/Guram-Gurych/shortenerURL.git/internal/service"
@@ -8,6 +10,7 @@ import (
 	"io"
 	"net/http"
 	"strings"
+	"time"
 )
 
 type RequestJSON struct {
@@ -21,12 +24,14 @@ type ResponseJSON struct {
 type Handler struct {
 	service service.URLShortener
 	baseURL string
+	db      *sql.DB
 }
 
-func NewHandler(s service.URLShortener, baseURL string) *Handler {
+func NewHandler(s service.URLShortener, baseURL string, db *sql.DB) *Handler {
 	return &Handler{
 		service: s,
 		baseURL: baseURL,
+		db:      db,
 	}
 }
 
@@ -44,7 +49,8 @@ func (h *Handler) Post(w http.ResponseWriter, r *http.Request) {
 
 	originalURL := string(body)
 
-	id, err := h.service.CreateShortURL(originalURL)
+	ctx := r.Context()
+	id, err := h.service.CreateShortURL(ctx, originalURL)
 	if err != nil {
 		http.Error(w, "Server error", http.StatusInternalServerError)
 		return
@@ -64,7 +70,8 @@ func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	originalURL, err := h.service.GetOriginalURL(id)
+	ctx := r.Context()
+	originalURL, err := h.service.GetOriginalURL(ctx, id)
 	if err != nil {
 		http.Error(w, "URL not found", http.StatusBadRequest)
 		return
@@ -93,7 +100,8 @@ func (h *Handler) PostShorten(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := h.service.CreateShortURL(req.URL)
+	ctx := r.Context()
+	id, err := h.service.CreateShortURL(ctx, req.URL)
 	if err != nil {
 		http.Error(w, "Server error", http.StatusInternalServerError)
 		return
@@ -109,4 +117,16 @@ func (h *Handler) PostShorten(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to decode request body", http.StatusBadRequest)
 		return
 	}
+}
+
+func (h *Handler) GetPing(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 1*time.Second)
+	defer cancel()
+
+	err := h.db.PingContext(ctx)
+	if err != nil {
+		http.Error(w, "Server error", http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
 }

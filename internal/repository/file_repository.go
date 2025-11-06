@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"context"
 	"encoding/json"
 	"github.com/Guram-Gurych/shortenerURL.git/internal/logger"
 	"github.com/Guram-Gurych/shortenerURL.git/internal/model"
@@ -81,7 +82,13 @@ func (rep *FileRepository) loadFromFile() error {
 	return nil
 }
 
-func (rep *FileRepository) Save(id, url string) error {
+func (rep *FileRepository) Save(ctx context.Context, id, url string) error {
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	default:
+	}
+
 	rep.mu.Lock()
 	defer rep.mu.Unlock()
 
@@ -110,7 +117,13 @@ func (rep *FileRepository) Save(id, url string) error {
 	return nil
 }
 
-func (rep *FileRepository) Get(id string) (string, error) {
+func (rep *FileRepository) Get(ctx context.Context, id string) (string, error) {
+	select {
+	case <-ctx.Done():
+		return "", ctx.Err()
+	default:
+	}
+
 	rep.mu.RLock()
 	defer rep.mu.RUnlock()
 

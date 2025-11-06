@@ -1,13 +1,16 @@
 package main
 
 import (
+	"database/sql"
 	"github.com/Guram-Gurych/shortenerURL.git/internal/config"
+	"github.com/Guram-Gurych/shortenerURL.git/internal/config/db"
 	"github.com/Guram-Gurych/shortenerURL.git/internal/handler"
 	"github.com/Guram-Gurych/shortenerURL.git/internal/logger"
 	"github.com/Guram-Gurych/shortenerURL.git/internal/middleware"
 	"github.com/Guram-Gurych/shortenerURL.git/internal/repository"
 	"github.com/Guram-Gurych/shortenerURL.git/internal/service"
 	"github.com/go-chi/chi/v5"
+	_ "github.com/jackc/pgx/v4/stdlib"
 	"go.uber.org/zap"
 	"net/http"
 )
@@ -19,6 +22,18 @@ func main() {
 	defer logger.Log.Sync()
 
 	cfg := config.InitConfig()
+
+	var dbConn *sql.DB
+	var err error
+	if cfg.DatabaseDSN != "" {
+		dbConn, err = db.Initialize(cfg.DatabaseDSN)
+		if err != nil {
+			logger.Log.Fatal("Ошибка инициализации DB", zap.Error(err))
+		}
+		defer dbConn.Close()
+		logger.Log.Info("DB connection established")
+	}
+
 	rep, err := repository.NewFileRepository(cfg.FileStoragePath)
 	if err != nil {
 		logger.Log.Fatal("Ошибка репозитория", zap.Error(err))
@@ -26,7 +41,7 @@ func main() {
 	defer rep.Close()
 
 	serv := service.NewShortenerService(rep)
-	hndl := handler.NewHandler(serv, cfg.BaseURL)
+	hndl := handler.NewHandler(serv, cfg.BaseURL, dbConn)
 
 	mux := chi.NewRouter()
 	mux.Use(middleware.RequestLogger)
@@ -34,6 +49,7 @@ func main() {
 	mux.Post("/", hndl.Post)
 	mux.Get("/{id}", hndl.Get)
 	mux.Post("/api/shorten", hndl.PostShorten)
+	mux.Get("/ping", hndl.GetPing)
 
 	logger.Log.Info("Starting server", zap.String("address", cfg.ServerAddress))
 

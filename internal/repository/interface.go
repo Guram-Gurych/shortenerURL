@@ -1,6 +1,8 @@
 package repository
 
+import "context"
+
 type URLRepository interface {
-	Save(id, url string) error
-	Get(id string) (string, error)
+	Save(ctx context.Context, id, url string) error
+	Get(ctx context.Context, id string) (string, error)
 }
