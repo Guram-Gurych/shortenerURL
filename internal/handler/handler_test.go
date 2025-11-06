@@ -69,7 +69,7 @@ func TestPostHandler(t *testing.T) {
 		}
 
 		baseURL := "http://localhost:8080"
-		handler := NewHandler(mockService, baseURL)
+		handler := NewHandler(mockService, baseURL, nil)
 
 		handler.Post(recorder, req)
 
@@ -146,7 +146,7 @@ func TestGetHandler(t *testing.T) {
 				},
 			}
 
-			handler := NewHandler(mockService, "http://localhost:8080")
+			handler := NewHandler(mockService, "http://localhost:8080", nil)
 			router := chi.NewRouter()
 			router.Get("/{id}", handler.Get)
 
@@ -233,7 +233,7 @@ func TestPostShortenHandler(t *testing.T) {
 			}
 
 			baseURL := "http://localhost:8080"
-			handler := NewHandler(mockService, baseURL)
+			handler := NewHandler(mockService, baseURL, nil)
 
 			handler.PostShorten(recorder, req)
 
