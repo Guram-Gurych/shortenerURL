@@ -10,6 +10,7 @@ import (
 	"github.com/Guram-Gurych/shortenerURL.git/internal/repository"
 	"github.com/Guram-Gurych/shortenerURL.git/internal/service"
 	"github.com/go-chi/chi/v5"
+	_ "github.com/jackc/pgx/v4/stdlib"
 	"go.uber.org/zap"
 	"net/http"
 )
