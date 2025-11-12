@@ -17,7 +17,7 @@ func InitConfig() *Config {
 
 	flag.StringVar(&config.ServerAddress, "a", ":8080", "address and port to run server")
 	flag.StringVar(&config.BaseURL, "b", "http://localhost:8080", "base address for the resulting shortened URL")
-	flag.StringVar(&config.FileStoragePath, "f", "/tmp/short-url-db.json", "file where the data is saved in JSON format")
+	flag.StringVar(&config.FileStoragePath, "f", "", "file where the data is saved in JSON format")
 	flag.StringVar(&config.DatabaseDSN, "d", "", "DB connection address")
 	flag.Parse()
 

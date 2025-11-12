@@ -16,6 +16,7 @@ import (
 )
 
 func main() {
+	var rep repository.URLRepository
 	if err := logger.Initialize("info"); err != nil {
 		panic(err)
 	}
@@ -31,14 +32,23 @@ func main() {
 			logger.Log.Fatal("Ошибка инициализации DB", zap.Error(err))
 		}
 		defer dbConn.Close()
-		logger.Log.Info("DB connection established")
-	}
 
-	rep, err := repository.NewFileRepository(cfg.FileStoragePath)
-	if err != nil {
-		logger.Log.Fatal("Ошибка репозитория", zap.Error(err))
+		if err := db.InitializeSchema(dbConn); err != nil {
+			logger.Log.Fatal("Ошибка создания схемы DB", zap.Error(err))
+		}
+		
+		logger.Log.Info("DB connection established")
+		rep = repository.NewDBRepository(dbConn)
+	} else if cfg.FileStoragePath != "" {
+		fileRepo, err := repository.NewFileRepository(cfg.FileStoragePath)
+		if err != nil {
+			logger.Log.Fatal("Ошибка инициализации файлового репозитория", zap.Error(err))
+		}
+		defer fileRepo.Close()
+		rep = fileRepo
+	} else {
+		rep = repository.NewMemoryRepository()
 	}
-	defer rep.Close()
 
 	serv := service.NewShortenerService(rep)
 	hndl := handler.NewHandler(serv, cfg.BaseURL, dbConn)
